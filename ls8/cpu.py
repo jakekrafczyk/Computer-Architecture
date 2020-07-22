@@ -41,19 +41,36 @@ class CPU:
 
         # For now, we've just hardcoded a program:
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+        if len(sys.argv) == 1:
+            program = [
+                # From print8.ls8
+                0b10000010, # LDI R0,8
+                0b00000000,
+                0b00001000,
+                0b01000111, # PRN R0
+                0b00000000,
+                0b00000001, # HLT
+            ]
 
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+            for instruction in program:
+                self.ram[address] = instruction
+                address += 1
+
+        else:
+            new_program = sys.argv[1]
+            with open(new_program) as f:
+                for line in f:
+                    try:
+                        line = line.split('#',1)[0]
+                        line = int(line, 2)
+                        self.ram[address] = line
+                        address += 1
+                        #print(self.ram)
+                        #self.branchcode[line] = 
+                    except ValueError:
+                        pass
+
+                #sys.exit(0)
 
 
     def alu(self, op, reg_a, reg_b):
@@ -61,6 +78,12 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
+
+            # NEED TO ADD IN OPERATIONS HERE
+
+        elif op == "MULT":
+            self.reg[reg_a] *= self.reg[reg_b]
+
         #elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
@@ -83,15 +106,35 @@ class CPU:
         for i in range(8):
             print(" %02X" % self.reg[i], end='')
 
-        print()
 
     def run(self):
         """Run the CPU."""
         running = True
-        
+        # branchtable = {}
+
+        # while running:
+        #     IR = self.ram[self.pc]
+        #     #IR = self.pc
+        #     operand_a = self.ram_read(self.pc+1)
+        #     operand_b = self.ram_read(self.pc+2)
+
+        # class Branch:
+        #     def __init__(self):
+        #         self.branchtable = {}
+        #         self.branchtable[OP1] = self.handle_op1
+        #         self.branchtable[OP2] = self.handle_op2
+
+        #     def handle_op1(self, x):
+        #         print('op 1:', + x)
+
+        #     def handle_op2(self, x):
+        #         print('op 1:', + x)
+
+
         while running:
             IR = self.ram[self.pc]
             #IR = self.pc
+            #print(IR)
             operand_a = self.ram_read(self.pc+1)
             operand_b = self.ram_read(self.pc+2)
 
@@ -101,13 +144,20 @@ class CPU:
                 self.pc += 3
 
             elif IR == 0b01000111:
-                # print 8
+                # print 8(or whatevers in the next register)
                 print(self.reg[operand_a])
                 self.pc += 2
 
             elif IR == self.HLT:
                 # halt the cpu
                 running = False
+
+            elif IR == 0b10100010:
+                self.alu('MULT',operand_a,operand_b)
+                self.pc += 3
+    
+
+    
 
 
 
