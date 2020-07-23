@@ -153,9 +153,42 @@ class CPU:
                 running = False
 
             elif IR == 0b10100010:
+                # the register key is 72 when the key should be 0 and value 72
                 self.alu('MULT',operand_a,operand_b)
                 self.pc += 3
+
+
+            elif IR == 0b01000101:
+                # PUSH FROM REGISTER TO MEMORY
+                # decrement stack pointer(stack pointer is the 8th value in the stack)
+                self.reg[7] -= 1
+
+                # get register value
+                #reg_num = operand_a #self.ram[pc + 1]
+                value = self.reg[operand_a]   #operand_a instead of reg_num
+
+                # store in memory at stack pointer
+                address_to_push_to = self.reg[7]
+                self.ram[address_to_push_to] = value
+
+                self.pc += 2
     
+            # ~~ THE STACK POINTER HOLDS THE ADDRESSES AND THE RAM HOLDS VALUES ~~
+            elif IR == 0b01000110:
+                # POP STACK VALUE
+                # get value from ram
+                address = self.reg[7]
+                value = self.ram[address]
+
+                # store in the given register
+                self.reg[operand_a] = value
+
+                # increment SP
+                self.reg[7] += 1
+
+                self.pc += 2
+
+
 
     
 
