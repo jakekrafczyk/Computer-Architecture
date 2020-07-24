@@ -24,6 +24,8 @@ class CPU:
 
         self.HLT = 0b00000001
 
+        self.flag = [0] * 8
+
     def ram_read(self, mar):
         # MAR is the memory address register
         return self.ram[mar]
@@ -79,10 +81,26 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
 
-            # NEED TO ADD IN OPERATIONS HERE
-
         elif op == "MULT":
             self.reg[reg_a] *= self.reg[reg_b]
+
+
+        elif op == "CMP":
+            #print('Compare')
+            if self.reg[reg_a] < self.reg[reg_b]:
+                self.flag[5] = 1
+                self.flag[6] = 0
+                self.flag[7] = 0
+            
+            if self.reg[reg_a] > self.reg[reg_b]:
+                self.flag[5] = 0
+                self.flag[6] = 1
+                self.flag[7] = 0
+
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.flag[5] = 0
+                self.flag[6] = 0
+                self.flag[7] = 1
 
         #elif op == "SUB": etc
         else:
@@ -110,27 +128,7 @@ class CPU:
     def run(self):
         """Run the CPU."""
         running = True
-        # branchtable = {}
-
-        # while running:
-        #     IR = self.ram[self.pc]
-        #     #IR = self.pc
-        #     operand_a = self.ram_read(self.pc+1)
-        #     operand_b = self.ram_read(self.pc+2)
-
-        # class Branch:
-        #     def __init__(self):
-        #         self.branchtable = {}
-        #         self.branchtable[OP1] = self.handle_op1
-        #         self.branchtable[OP2] = self.handle_op2
-
-        #     def handle_op1(self, x):
-        #         print('op 1:', + x)
-
-        #     def handle_op2(self, x):
-        #         print('op 1:', + x)
-
-        #self.reg[7] = 1
+        
         self.counter = 0
 
         while running:
@@ -144,7 +142,7 @@ class CPU:
             operand_b = self.ram_read(self.pc+2)
 
             if IR == 0b10000010:
-                print('load')
+                #print('load')
                 # loads 8 into the register
                 self.reg[operand_a] = operand_b
 
@@ -218,36 +216,15 @@ class CPU:
                 else:
                     self.pc += 2
 
-            elif IR == 0b01010000:
-                print('call')
-                # CALL
-                # get address of the next instruction
-                return_addr = self.pc + 2
 
-                # push it onto the stack
-                self.reg[7] -= 1
-                address_to_push_to = self.reg[7]
-                self.ram[address_to_push_to] = return_addr
+            elif IR == 0b01010100:
+                #print('jump')
+                # jump
 
-                # set the pc to the subroutine address
-                subroutine_addr = self.reg[operand_a]
+                # set the pc to the new address
+                new_addr = self.reg[operand_a]
 
-                self.pc = subroutine_addr
-
-                self.counter -= 1
-
-                # problem occurs when 
-
-            elif IR == 0B00010001:
-                print('return')
-                # RETURN
-                # get return address from the top of the stack
-                address_to_pop_from = self.reg[7]
-                return_addr = self.ram[address_to_pop_from]
-                self.reg[7] += 1
-
-                # set the pc to the return address
-                self.pc = return_addr
+                self.pc = new_addr
 
 
             elif IR == 0b10100000:
@@ -259,6 +236,77 @@ class CPU:
                     self.counter += 1
                 else:
                     self.pc += 3
+
+
+            elif IR == 0b10100111:
+                # COMPARE
+                self.alu('CMP',operand_a,operand_b)
+                self.pc += 3
+
+
+            elif IR == 0b01010101:
+                # JUMP IF EQUAL
+                #print('JEQ')
+                if self.flag[7] == 1:
+                    # set the pc to the new address
+                    new_addr = self.reg[operand_a]
+
+                    self.pc = new_addr
+
+                else:
+                    self.pc += 2
+
+
+            elif IR == 0b01010110:
+                # JUMP IF NOT EQUAL
+                #print('JNE')
+                if self.flag[7] == 0:
+                    # set the pc to the new address
+                    new_addr = self.reg[operand_a]
+
+                    self.pc = new_addr
+
+                else:
+                    self.pc += 2
+
+
+
+
+
+
+
+
+
+            # elif IR == 0b01010000:
+            #     print('call')
+            #     # CALL
+            #     # get address of the next instruction
+            #     return_addr = self.pc + 2
+
+            #     # push it onto the stack
+            #     self.reg[7] -= 1
+            #     address_to_push_to = self.reg[7]
+            #     self.ram[address_to_push_to] = return_addr
+
+            #     # set the pc to the subroutine address
+            #     subroutine_addr = self.reg[operand_a]
+
+            #     self.pc = subroutine_addr
+
+            #     self.counter -= 1
+
+            #     # problem occurs when 
+
+            # elif IR == 0B00010001:
+            #     print('return')
+            #     # RETURN
+            #     # get return address from the top of the stack
+            #     address_to_pop_from = self.reg[7]
+            #     return_addr = self.ram[address_to_pop_from]
+            #     self.reg[7] += 1
+
+            #     # set the pc to the return address
+            #     self.pc = return_addr
 
     
 
