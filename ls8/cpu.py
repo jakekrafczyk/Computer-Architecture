@@ -37,7 +37,7 @@ class CPU:
     def load(self):
         """Load a program into memory."""
 
-        address = 0
+        self.address_num = 0
 
         # For now, we've just hardcoded a program:
 
@@ -53,8 +53,8 @@ class CPU:
             ]
 
             for instruction in program:
-                self.ram[address] = instruction
-                address += 1
+                self.ram[self.address_num] = instruction
+                self.address_num += 1
 
         else:
             new_program = sys.argv[1]
@@ -63,8 +63,8 @@ class CPU:
                     try:
                         line = line.split('#',1)[0]
                         line = int(line, 2)
-                        self.ram[address] = line
-                        address += 1
+                        self.ram[self.address_num] = line
+                        self.address_num += 1
                         #print(self.ram)
                         #self.branchcode[line] = 
                     except ValueError:
@@ -130,8 +130,13 @@ class CPU:
         #     def handle_op2(self, x):
         #         print('op 1:', + x)
 
+        #self.reg[7] = 1
+        self.counter = 0
 
         while running:
+            #print(self.pc)
+            #print(self.address_num)
+            
             IR = self.ram[self.pc]
             #IR = self.pc
             #print(IR)
@@ -139,23 +144,40 @@ class CPU:
             operand_b = self.ram_read(self.pc+2)
 
             if IR == 0b10000010:
+                print('load')
                 # loads 8 into the register
                 self.reg[operand_a] = operand_b
-                self.pc += 3
+
+                if self.counter < 0:
+                    self.pc = self.address_num - 1
+                    self.counter += 1
+                else:
+                    self.pc += 3
 
             elif IR == 0b01000111:
                 # print 8(or whatevers in the next register)
                 print(self.reg[operand_a])
-                self.pc += 2
+
+                if self.counter < 0:
+                    self.pc = self.address_num -1
+                    self.counter += 1
+                else:
+                    self.pc += 2
 
             elif IR == self.HLT:
                 # halt the cpu
                 running = False
 
             elif IR == 0b10100010:
+                print('mult')
                 # the register key is 72 when the key should be 0 and value 72
                 self.alu('MULT',operand_a,operand_b)
-                self.pc += 3
+                
+                if self.counter < 0:
+                    self.pc = self.address_num - 1
+                    self.counter += 1
+                else:
+                    self.pc += 3
 
 
             elif IR == 0b01000101:
@@ -171,7 +193,11 @@ class CPU:
                 address_to_push_to = self.reg[7]
                 self.ram[address_to_push_to] = value
 
-                self.pc += 2
+                if self.counter < 0:
+                    self.pc = self.address_num - 1
+                    self.counter += 1
+                else:
+                    self.pc += 2
     
             # ~~ THE STACK POINTER HOLDS THE ADDRESSES AND THE RAM HOLDS VALUES ~~
             elif IR == 0b01000110:
@@ -186,9 +212,53 @@ class CPU:
                 # increment SP
                 self.reg[7] += 1
 
-                self.pc += 2
+                if self.reg[7] < 0:
+                    self.pc = self.address_num - 1
+                    self.counter += 1
+                else:
+                    self.pc += 2
+
+            elif IR == 0b01010000:
+                print('call')
+                # CALL
+                # get address of the next instruction
+                return_addr = self.pc + 2
+
+                # push it onto the stack
+                self.reg[7] -= 1
+                address_to_push_to = self.reg[7]
+                self.ram[address_to_push_to] = return_addr
+
+                # set the pc to the subroutine address
+                subroutine_addr = self.reg[operand_a]
+
+                self.pc = subroutine_addr
+
+                self.counter -= 1
+
+                # problem occurs when 
+
+            elif IR == 0B00010001:
+                print('return')
+                # RETURN
+                # get return address from the top of the stack
+                address_to_pop_from = self.reg[7]
+                return_addr = self.ram[address_to_pop_from]
+                self.reg[7] += 1
+
+                # set the pc to the return address
+                self.pc = return_addr
 
 
+            elif IR == 0b10100000:
+                print('add')
+                # ADD
+                self.alu('ADD',operand_a,operand_b)
+                if self.counter < 0:
+                    self.pc = self.address_num - 1
+                    self.counter += 1
+                else:
+                    self.pc += 3
 
     
 
