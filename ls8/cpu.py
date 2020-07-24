@@ -184,7 +184,6 @@ class CPU:
                 self.reg[7] -= 1
 
                 # get register value
-                #reg_num = operand_a #self.ram[pc + 1]
                 value = self.reg[operand_a]   #operand_a instead of reg_num
 
                 # store in memory at stack pointer
@@ -220,7 +219,6 @@ class CPU:
             elif IR == 0b01010100:
                 #print('jump')
                 # jump
-
                 # set the pc to the new address
                 new_addr = self.reg[operand_a]
 
@@ -268,10 +266,6 @@ class CPU:
 
                 else:
                     self.pc += 2
-
-
-
-
 
 
 
